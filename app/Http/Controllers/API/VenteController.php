@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Models\Vente;
 use App\Models\VenteProduit;
 use App\Models\Produit;
+use App\Models\Client;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\DB;
@@ -32,20 +33,15 @@ class VenteController extends Controller
             foreach ($request->produits as $item) {
                 $produit = Produit::find($item['produit_id']);
                 
-                // Si le produit n'existe pas
                 if (!$produit) {
                     throw new \Exception("Produit avec l'ID {$item['produit_id']} non trouvé.");
                 }
 
-                // Log pour vérifier l'état du produit et de son stock
-                Log::info("Produit trouvé : {$produit->nom} avec stock actuel : {$produit->stock}");
-
-                // Vérification du stock du produit
                 if ($produit->stock < $item['quantite']) {
                     throw new \Exception("Stock insuffisant pour le produit {$produit->nom}. Stock actuel : {$produit->stock}");
                 }
 
-                // Calcul du montant total de la vente
+                // Calcul du montant total
                 $montant_total += $produit->prix_vente * $item['quantite'];
 
                 // Mise à jour du stock
@@ -64,7 +60,6 @@ class VenteController extends Controller
             foreach ($request->produits as $item) {
                 $produit = Produit::find($item['produit_id']);
 
-                // Enregistrer les produits dans la table VenteProduit
                 VenteProduit::create([
                     'vente_id' => $vente->id,
                     'produit_id' => $produit->id,
@@ -90,5 +85,74 @@ class VenteController extends Controller
                 'details' => $e->getMessage()
             ], 500);
         }
+    }
+
+    // 🔹 Récupérer l'historique des ventes
+    public function index()
+    {
+        $ventes = Vente::with('client')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json($ventes);
+    }
+
+    // 🔹 Détails d'une vente
+    public function show($id)
+    {
+        $vente = Vente::with(['produits.produit', 'client'])
+            ->findOrFail($id);
+
+        return response()->json($vente);
+    }
+
+    // 🔹 Récupérer les KPIs
+    public function getKPIs()
+    {
+        // Calcul des KPIs
+        $totalSales = Vente::sum('montant_total'); // Total des ventes
+        $totalProductsSold = VenteProduit::sum('quantite'); // Total des produits vendus
+        $totalClients = Client::count(); // Nombre total de clients
+
+        return response()->json([
+            'total_sales' => $totalSales,
+            'total_products_sold' => $totalProductsSold,
+            'total_clients' => $totalClients,
+        ]);
+    }
+
+    // 🔹 Récupérer le rapport des ventes par période
+    public function getReport(Request $request)
+    {
+        $period = $request->query('period', 'monthly');
+        $salesReport = [];
+
+        // Rapport des ventes mensuelles
+        if ($period == 'monthly') {
+            $salesReport = Vente::selectRaw('SUM(montant_total) as total_sales, MONTH(created_at) as month')
+                ->groupBy('month')
+                ->orderBy('month', 'desc')
+                ->get();
+        }
+
+        return response()->json($salesReport);
+    }
+
+    // 🔹 Prévisions des ventes
+    public function getForecast()
+    {
+        // Données de ventes par mois
+        $salesData = Vente::selectRaw('MONTH(created_at) as month, SUM(montant_total) as total_sales')
+            ->groupBy('month')
+            ->orderBy('month', 'asc')
+            ->get();
+
+        // Calcul de la moyenne des ventes passées
+        $averageSales = $salesData->avg('total_sales');
+
+        return response()->json([
+            'average_sales' => $averageSales,
+            'forecast' => $averageSales * 1.2 // Prédiction 20% au-dessus de la moyenne
+        ]);
     }
 }

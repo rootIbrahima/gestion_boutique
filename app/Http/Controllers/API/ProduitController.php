@@ -3,12 +3,14 @@
 namespace App\Http\Controllers\API;
 
 use App\Models\Produit;
+use App\Models\Categorie; // Assurez-vous d'inclure le modèle Categorie
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\DB;
 
 class ProduitController extends Controller
 {
-    // Créer un produit avec un stock initial
+    // 🔹 Créer un produit avec un stock initial
     public function store(Request $request)
     {
         // Validation des données reçues
@@ -17,7 +19,7 @@ class ProduitController extends Controller
             'description' => 'required|string|max:255',
             'prix_achat' => 'required|numeric',
             'prix_vente' => 'required|numeric',
-            'categorie_id' => 'required|exists:categories,id',
+            'categorie_id' => 'required|exists:categories,id', // Assurez-vous que la catégorie existe
             'stock' => 'nullable|integer|min:0', // stock est optionnel mais doit être positif si fourni
         ]);
 
@@ -35,12 +37,17 @@ class ProduitController extends Controller
                 'stock' => $validated['stock'], // Assigner le stock
             ]);
 
+            // Charger la catégorie associée au produit
+            $produit->load('categorie');
+
+            // Retourner une réponse avec le produit ajouté
             return response()->json([
                 'message' => 'Produit ajouté avec succès!',
                 'produit' => $produit
             ], 201);
 
         } catch (\Exception $e) {
+            // En cas d'erreur, retourner une erreur avec le message
             return response()->json([
                 'error' => 'Erreur lors de l\'ajout du produit',
                 'details' => $e->getMessage()
@@ -48,56 +55,80 @@ class ProduitController extends Controller
         }
     }
 
-    // Liste tous les produits
+    // 🔹 Liste tous les produits
     public function index()
     {
-        $produits = Produit::all();
+        // Récupère tous les produits avec leurs catégories associées
+        $produits = Produit::with('categorie')->get();
+
+        // Retourner tous les produits sous forme de JSON
         return response()->json($produits);
     }
 
-    // Afficher un produit par son ID
+    // 🔹 Afficher un produit par son ID
     public function show($id)
     {
-        $produit = Produit::find($id);
+        // Trouver le produit avec son ID, et inclure la catégorie associée
+        $produit = Produit::with('categorie')->find($id);
+        
+        // Si le produit n'est pas trouvé
         if (!$produit) {
             return response()->json(['error' => 'Produit non trouvé'], 404);
         }
+
+        // Retourner les détails du produit
         return response()->json($produit);
     }
 
-    // Modifier un produit
+    // 🔹 Modifier un produit
     public function update(Request $request, $id)
     {
+        // Trouver le produit par son ID
         $produit = Produit::find($id);
+
+        // Si le produit n'est pas trouvé
         if (!$produit) {
             return response()->json(['error' => 'Produit non trouvé'], 404);
         }
 
+        // Validation des données reçues pour la mise à jour
         $validated = $request->validate([
             'nom' => 'required|string|max:255',
             'description' => 'required|string|max:255',
             'prix_achat' => 'required|numeric',
             'prix_vente' => 'required|numeric',
             'categorie_id' => 'required|exists:categories,id',
-            'stock' => 'nullable|integer|min:0', // stock est optionnel mais doit être positif si fourni
+            'stock' => 'nullable|integer|min:0',
         ]);
 
+        // Mise à jour des informations du produit
         $produit->update($validated);
 
+        // Charger la catégorie mise à jour
+        $produit->load('categorie');
+
+        // Retourner une réponse avec le produit mis à jour
         return response()->json([
             'message' => 'Produit mis à jour avec succès',
             'produit' => $produit
         ]);
     }
 
-    // Supprimer un produit
+    // 🔹 Supprimer un produit
     public function destroy($id)
     {
+        // Trouver le produit par son ID
         $produit = Produit::find($id);
+
+        // Si le produit n'est pas trouvé
         if (!$produit) {
             return response()->json(['error' => 'Produit non trouvé'], 404);
         }
+
+        // Supprimer le produit
         $produit->delete();
+
+        // Retourner une réponse confirmant la suppression
         return response()->json(['message' => 'Produit supprimé avec succès']);
     }
 }
