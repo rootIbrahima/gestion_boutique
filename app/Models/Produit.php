@@ -14,7 +14,8 @@ class Produit extends Model
         'description',
         'prix_achat',
         'prix_vente',
-        'categorie_id', // Assurez-vous que cette colonne existe dans la table produits
+        'categorie_id',
+        'image_url', // Ajout du champ image_url
     ];
 
     // Relation : Un produit appartient à une catégorie

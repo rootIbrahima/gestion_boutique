@@ -13,7 +13,8 @@ Route::prefix('produits')->group(function () {
     Route::post('/', [ProduitController::class, 'store']);     // Ajouter un produit
     Route::put('{id}', [ProduitController::class, 'update']);  // Modifier un produit
     Route::delete('{id}', [ProduitController::class, 'destroy']); // Supprimer un produit
-    
+    Route::get('/produits/{id}', [ProduitController::class, 'show']);
+
 });
 
 Route::prefix('clients')->group(function () {
