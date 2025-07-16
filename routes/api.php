@@ -1,11 +1,10 @@
 <?php
-
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\API\ProduitController;
 use App\Http\Controllers\API\ClientController;
 use App\Http\Controllers\API\VenteController;
 use App\Http\Controllers\API\CategorieController;
-
+use App\Http\Controllers\AuthController;
 
 // Routes API pour les produits
 Route::prefix('produits')->group(function () {
@@ -13,10 +12,10 @@ Route::prefix('produits')->group(function () {
     Route::post('/', [ProduitController::class, 'store']);     // Ajouter un produit
     Route::put('{id}', [ProduitController::class, 'update']);  // Modifier un produit
     Route::delete('{id}', [ProduitController::class, 'destroy']); // Supprimer un produit
-    Route::get('/produits/{id}', [ProduitController::class, 'show']);
-
+    Route::get('{id}', [ProduitController::class, 'show']); // Détails produit
 });
 
+// Routes API pour les clients
 Route::prefix('clients')->group(function () {
     Route::get('/', [ClientController::class, 'index']);           // Tous les clients
     Route::post('/', [ClientController::class, 'store']);          // Ajouter un client
@@ -39,8 +38,11 @@ Route::get('/ventes/report', [VenteController::class, 'getReport']);
 // Route pour obtenir les prévisions de ventes
 Route::get('/ventes/forecast', [VenteController::class, 'getForecast']);
 
+// Routes API pour les catégories
 Route::prefix('categories')->group(function () {
     Route::get('/', [CategorieController::class, 'index']);  // Récupérer toutes les catégories
     Route::post('/', [CategorieController::class, 'store']); // Ajouter une catégorie
-    // Vous pouvez également ajouter d'autres routes pour la mise à jour et la suppression des catégories
 });
+
+// Route de connexion pour les utilisateurs
+Route::post('/login', [AuthController::class, 'login']); // Route pour se connecter

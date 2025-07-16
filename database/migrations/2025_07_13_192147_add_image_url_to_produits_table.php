@@ -13,9 +13,12 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::table('produits', function (Blueprint $table) {
-            $table->string('image_url')->nullable(); // Ajoute la colonne image_url
-        });
+        // Vérifier si la colonne image_url existe déjà
+        if (!Schema::hasColumn('produits', 'image_url')) {
+            Schema::table('produits', function (Blueprint $table) {
+                $table->string('image_url')->nullable(); // Ajoute la colonne image_url si elle n'existe pas
+            });
+        }
     }
 
     /**
@@ -25,8 +28,11 @@ return new class extends Migration
      */
     public function down()
     {
-        Schema::table('produits', function (Blueprint $table) {
-            $table->dropColumn('image_url'); // Supprime la colonne si on rollback
-        });
+        // Supprime la colonne image_url si elle existe
+        if (Schema::hasColumn('produits', 'image_url')) {
+            Schema::table('produits', function (Blueprint $table) {
+                $table->dropColumn('image_url');
+            });
+        }
     }
 };
