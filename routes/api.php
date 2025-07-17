@@ -5,6 +5,13 @@ use App\Http\Controllers\API\ClientController;
 use App\Http\Controllers\API\VenteController;
 use App\Http\Controllers\API\CategorieController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\EmployeController;
+
+// Routes pour les employés
+Route::get('employes', [EmployeController::class, 'index']); // Récupérer tous les employés
+Route::post('employes', [EmployeController::class, 'store']); // Ajouter un employé
+Route::put('employes/{id}', [EmployeController::class, 'update']); // Modifier un employé
+Route::delete('employes/{id}', [EmployeController::class, 'destroy']); // Supprimer un employé
 
 // Routes API pour les produits
 Route::prefix('produits')->group(function () {
